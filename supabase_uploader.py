@@ -15,41 +15,20 @@ class SupabaseUploader:
         try:
             record = self._prepare_record(product_data)
             
-            response = self.client.table('products').insert(record).execute()
-            
-            if response.data:
-                print(f"    Inserted: {product_data.get('id', 'unknown')}")
-                return True
-            else:
-                print(f"    No data returned for: {product_data.get('id', 'unknown')}")
-                return False
-                
-        except Exception as e:
-            error_msg = str(e)
-            
-            if 'duplicate key' in error_msg.lower() or 'unique constraint' in error_msg.lower():
-                print(f"    Product already exists: {product_data.get('id', 'unknown')}")
-                return self._update_product(product_data)
-            else:
-                print(f"    Error inserting product: {error_msg}")
-                return False
-    
-    def _update_product(self, product_data: Dict[str, Any]) -> bool:
-        try:
-            record = self._prepare_record(product_data)
-            
             response = self.client.table('products').upsert(
                 record,
                 on_conflict='source, product_url'
             ).execute()
             
             if response.data:
-                print(f"    Updated: {product_data.get('id', 'unknown')}")
+                print(f"    Upserted: {product_data.get('id', 'unknown')}")
                 return True
-            return False
-            
+            else:
+                print(f"    Failed: {product_data.get('id', 'unknown')}")
+                return False
+                
         except Exception as e:
-            print(f"    Error updating product: {e}")
+            print(f"    Error upserting product: {e}")
             return False
     
     def _prepare_record(self, product_data: Dict[str, Any]) -> Dict[str, Any]:
