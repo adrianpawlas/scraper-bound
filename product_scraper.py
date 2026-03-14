@@ -71,7 +71,7 @@ class ProductScraper:
             "price": price,
             "sale": sale_price if sale_price else price,
             "second_hand": SECOND_HAND,
-            "country": COUNTRY,
+            "country": None,
             "image_url": images[0] if images else None,
             "additional_images": ", ".join(images[1:]) if len(images) > 1 else None,
             "metadata": metadata,
@@ -96,27 +96,57 @@ class ProductScraper:
         for variant in variants:
             price = variant.get('price')
             if price:
-                prices.add(price)
+                try:
+                    prices.add(float(price))
+                except (ValueError, TypeError):
+                    pass
             
             compare_at = variant.get('compare_at_price')
             if compare_at:
-                compare_prices.add(compare_at)
+                try:
+                    compare_prices.add(float(compare_at))
+                except (ValueError, TypeError):
+                    pass
         
         if prices:
             price = min(prices)
         else:
-            price = "0"
+            price = 0.0
         
         sale_price = None
-        if compare_prices and min(compare_prices) > float(price):
-            sale_price = price
+        if compare_prices and min(compare_prices) > price:
+            sale_price = f"{price}GBP"
             price = min(compare_prices)
         
         return f"{price}GBP", sale_price
     
     def _extract_images(self, product: Dict[str, Any]) -> List[str]:
         images = product.get('images', [])
-        return [img.get('src', '') for img in images if img.get('src')]
+        all_image_urls = [img.get('src', '') for img in images if img.get('src')]
+        
+        bound_images = []
+        img_images = []
+        
+        for url in all_image_urls:
+            url_upper = url.upper()
+            if 'BOUND' in url_upper:
+                bound_images.append(url)
+            elif 'IMG_' in url_upper:
+                img_images.append(url)
+        
+        if bound_images:
+            selected = bound_images
+        elif img_images:
+            selected = img_images
+        else:
+            selected = all_image_urls[:1] if all_image_urls else []
+        
+        processed = []
+        for url in selected:
+            separator = '&' if '?' in url else '?'
+            processed.append(f"{url}{separator}width=713")
+        
+        return processed
     
     def _extract_sizes(self, product: Dict[str, Any]) -> List[str]:
         variants = product.get('variants', [])
@@ -140,15 +170,8 @@ class ProductScraper:
         
         return colors
     
-    def _extract_gender(self, title: str, category: str) -> str:
-        combined = f"{title} {category}".lower()
-        
-        if any(word in combined for word in ['men', 'man', 'male', 'mens', 'boy']):
-            return "man"
-        elif any(word in combined for word in ['women', 'woman', 'female', 'womens', 'ladies', 'girl']):
-            return "woman"
-        
-        return "woman"
+    def _extract_gender(self, title: str, category: str) -> None:
+        return None
     
     def _build_metadata(self, product: Dict[str, Any], title: str, description: str, 
                         price: str, sale_price: Optional[str], sizes: List[str], 
