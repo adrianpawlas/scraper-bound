@@ -18,7 +18,7 @@ class CategoryScraper:
         while True:
             print(f"  Fetching page {page}...")
             
-            url = f"https://wearebound.co.uk/products.json?page={page}"
+            url = f"https://wearebound.co.uk/products.json?page={page}&currency=EUR"
             response = self.session.get(url, timeout=30)
             
             if response.status_code != 200:

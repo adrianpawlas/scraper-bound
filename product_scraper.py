@@ -19,7 +19,7 @@ class ProductScraper:
             if not handle:
                 return None
             
-            url = f"https://wearebound.co.uk/products/{handle}.json"
+            url = f"https://wearebound.co.uk/products/{handle}.json?currency=EUR"
             response = self.session.get(url, timeout=30)
             
             if response.status_code != 200:
@@ -115,10 +115,10 @@ class ProductScraper:
         
         sale_price = None
         if compare_prices and min(compare_prices) > price:
-            sale_price = f"{price}GBP"
+            sale_price = f"{price}EUR"
             price = min(compare_prices)
         
-        return f"{price}GBP", sale_price
+        return f"{price}EUR", sale_price
     
     def _extract_images(self, product: Dict[str, Any]) -> List[str]:
         images = product.get('images', [])
