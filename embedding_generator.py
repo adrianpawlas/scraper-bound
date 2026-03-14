@@ -35,6 +35,12 @@ class EmbeddingGenerator:
             
             with torch.no_grad():
                 outputs = self.model.get_image_features(**inputs)
+                if hasattr(outputs, 'last_hidden_state'):
+                    outputs = outputs.last_hidden_state
+                elif hasattr(outputs, 'pooler_output'):
+                    outputs = outputs.pooler_output
+                else:
+                    outputs = outputs
             
             embedding = outputs.cpu().numpy()[0].tolist()
             
@@ -56,6 +62,12 @@ class EmbeddingGenerator:
             
             with torch.no_grad():
                 outputs = self.model.get_text_features(**inputs)
+                if hasattr(outputs, 'last_hidden_state'):
+                    outputs = outputs.last_hidden_state
+                elif hasattr(outputs, 'pooler_output'):
+                    outputs = outputs.pooler_output
+                else:
+                    outputs = outputs
             
             embedding = outputs.cpu().numpy()[0].tolist()
             
